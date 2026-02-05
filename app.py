@@ -6,9 +6,9 @@ import segno
 import io
 from pdf417decoder import PDF417Decoder
 
-st.set_page_config(page_title="HUB3 u Revolut", page_icon="đź‡­đź‡·")
+st.set_page_config(page_title="HUB3 u Revolut", page_icon="🇭🇷")
 
-st.title("đź‡­đź‡· HUB3 u Revolut")
+st.title("🇭🇷 HUB3 u Revolut")
 st.markdown("Pretvorite hrvatske uplatnice u QR kodove za Revolut, Wise i ostale banke.")
 
 def parse_and_generate(raw_data):
@@ -18,10 +18,10 @@ def parse_and_generate(raw_data):
         if isinstance(raw_data, (bytearray, bytes)):
             raw_data = raw_data.decode('utf-8', errors='ignore')
         
-        # 2. ÄŚiĹˇÄ‡enje redova
+        # 2. Čišćenje redova
         lines = [line.strip() for line in raw_data.split('\n') if line.strip()]
         
-        # 3. PronalaĹľenje poÄŤetka HUB3 formata
+        # 3. Pronalaženje početka HUB3 formata
         start_idx = -1
         for i, line in enumerate(lines):
             if "HRVHUB30" in line:
@@ -35,20 +35,20 @@ def parse_and_generate(raw_data):
 
         data = lines[start_idx:]
         
-        # --- PAMETNA EKSTRAKCIJA (PretraĹľivanje po uzorcima) ---
+        # --- PAMETNA EKSTRAKCIJA (Pretraživanje po uzorcima) ---
         iban = ""
         model = ""
         poziv = ""
         primatelj_lines = []
         
-        # A. TraĹľenje IBAN-a (HR + 19 znamenki)
+        # A. Traženje IBAN-a (HR + 19 znamenki)
         for d in data:
             clean_d = d.replace(" ", "")
             if clean_d.startswith("HR") and len(clean_d) > 15:
                 iban = clean_d
                 break
         
-        # B. TraĹľenje Modela (HRxx) i Poziva na broj
+        # B. Traženje Modela (HRxx) i Poziva na broj
         for i, d in enumerate(data):
             if d.startswith("HR") and len(d) == 4: # npr. HR68, HR01
                 model = d
@@ -61,7 +61,7 @@ def parse_and_generate(raw_data):
         iznos = float(iznos_str) / 100 if iznos_str.isdigit() else 0.00
         
         # D. Primatelj (skupljamo redove koji nisu IBAN, iznos ili marker)
-        # ObiÄŤno su to redovi 4, 5 i 6 unutar HUB3 bloka
+        # Obično su to redovi 4, 5 i 6 unutar HUB3 bloka
         if len(data) > 6:
             primatelj_lines = [data[6]]
             # Ako 7. red nije IBAN, vjerojatno je drugi dio adrese primatelja
@@ -72,7 +72,7 @@ def parse_and_generate(raw_data):
         referenca = f"{model} {poziv}".strip()
 
         # 4. Generiranje EPC QR podataka
-        # Revolut zahtijeva toÄŤan redoslijed: Service, Version, Encoding, Type, BIC, Name, IBAN, Amount, Purpose, Ref...
+        # Revolut zahtijeva točan redoslijed: Service, Version, Encoding, Type, BIC, Name, IBAN, Amount, Purpose, Ref...
         epc_data = (
             f"BCD\n002\n1\nSCT\n\n"
             f"{primatelj[:70]}\n{iban}\n"
@@ -86,7 +86,7 @@ def parse_and_generate(raw_data):
         qr.save(out_img, kind='png', scale=10)
         
         # --- PRIKAZ REZULTATA ---
-        st.success(f"âś… OÄŤitano: {iznos:.2f} EUR")
+        st.success(f"✅ Očitano: {iznos:.2f} EUR")
         
         col1, col2 = st.columns(2)
         with col1:
@@ -94,29 +94,29 @@ def parse_and_generate(raw_data):
             st.write(f"**Primatelj:** {primatelj}")
             st.write(f"**IBAN:** {iban}")
             st.write(f"**Poziv na broj:** {referenca}")
-            st.info("đź’ˇ Ako je iznos 0.00, upiĹˇite ga ruÄŤno u bankovnoj aplikaciji.")
+            st.info("💡 Ako je iznos 0.00, upišite ga ručno u bankovnoj aplikaciji.")
         
         with col2:
             st.image(out_img, caption="Skenirajte mobitelom (Revolut/Wise)")
             st.download_button("Spremi QR kod", out_img.getvalue(), "uplatnica_qr.png")
 
     except Exception as e:
-        st.error(f"GreĹˇka pri obradi: {e}")
+        st.error(f"Greška pri obradi: {e}")
         st.info("Sirovi podaci za debugiranje:")
         st.code(raw_data)
 
 # --- GLAVNI PROGRAM ---
-uploaded_file = st.file_uploader("UÄŤitajte sliku uplatnice (JPG ili PNG)", type=['jpg', 'jpeg', 'png'])
+uploaded_file = st.file_uploader("Učitajte sliku uplatnice (JPG ili PNG)", type=['jpg', 'jpeg', 'png'])
 
 if uploaded_file:
     img = Image.open(uploaded_file).convert('RGB')
-    st.image(img, caption="UÄŤitana slika", use_container_width=True)
+    st.image(img, caption="Učitana slika", use_container_width=True)
     
     decoder = PDF417Decoder(img)
     
-    # Prvi pokuĹˇaj dekodiranja
+    # Prvi pokušaj dekodiranja
     if decoder.decode() == 0:
-        # Drugi pokuĹˇaj s procesiranjem slike ako prvi ne uspije
+        # Drugi pokušaj s procesiranjem slike ako prvi ne uspije
         cv_img = np.array(img)
         gray = cv2.cvtColor(cv_img, cv2.COLOR_RGB2GRAY)
         gray = cv2.resize(gray, None, fx=2, fy=2, interpolation=cv2.INTER_LANCZOS4)
@@ -136,11 +136,10 @@ if uploaded_file:
     if final_data:
         parse_and_generate(final_data)
     else:
-        st.error("âťŚ Bar kod nije pronaÄ‘en. Probajte bolje osvijetliti uplatnicu ili napraviti screenshot.")
+        st.error("❌ Bar kod nije pronađen. Probajte bolje osvijetliti uplatnicu ili napraviti screenshot.")
 
-# Opcija za ruÄŤni unos ako skener baĹˇ nikako ne radi
-with st.expander("RuÄŤni unos teksta (ako skener zakaĹľe)"):
+# Opcija za ručni unos ako skener baš nikako ne radi
+with st.expander("Ručni unos teksta (ako skener zakaže)"):
     manual_text = st.text_area("Zalijepite tekst ovdje:")
     if st.button("Generiraj iz teksta"):
         parse_and_generate(manual_text)
-        
